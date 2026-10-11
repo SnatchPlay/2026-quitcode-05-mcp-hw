@@ -1,4 +1,4 @@
-# Перевірка (Task A)
+# Перевірка (Task A, бонус E1)
 
 - **Інструмент і версія, модель:** Claude Code 2.1.289 · Claude Sonnet 5.5 (`claude-sonnet-5-5`)
 - **ОС і термінал, Node:** macOS (Darwin 25.6.0) · zsh, команди Inspector — через `bash` · Node v24.16.0
@@ -37,7 +37,7 @@
   ```
 
 - **`set-status.json`:** `lead_0002`, `new → contacted`; у `structuredContent.audit` —
-  `{ "action": "lead.status_changed", "leadId": "lead_0002", "at": "2026-10-11T11:30:44.177Z", "from": "new", "to": "contacted", "reason": "перевірка в Inspector" }`.
+  `{ "action": "lead.status_changed", "leadId": "lead_0002", "at": "2026-10-11T11:33:58.793Z", "from": "new", "to": "contacted", "reason": "перевірка в Inspector" }`.
   Кожен виклик Inspector'а запускає сервер заново, тому `lead_0002` щоразу починає зі статусу `new`.
 - **Читання** — `leaddesk_find_leads`, поле `content[0].text` відповіді Inspector'а, exit=0:
 
@@ -63,3 +63,35 @@
 - **Що було найважче в описах:** сказати моделі й про «змінює дані», і про «потрібне підтвердження»,
   не повторюючи тексту двічі. Опис — лише підказка моделі; обов'язкове схвалення має давати клієнт, і це ще треба налаштувати й перевірити
   в Task B (на цей момент `.claude/settings.json` не змінено).
+
+## Task E (бонус) — E1, HTTP-сервер із захистом Host/Origin
+
+- **Варіант:** E1. `src/http.mjs` слухає лише `127.0.0.1` (порт 3333) і використовує ту саму фабрику, що stdio:
+  вона винесена в `src/factory.mjs`, `src/server.mjs` лишився тонкою обгорткою на `serveStdio`. У
+  `package.json` додано `@modelcontextprotocol/node` точною версією `2.1.0`.
+- **Гварди викликано в обробнику** до `mcp(req, res)`: `localhostHostValidation()` і
+  `localhostOriginValidation()`, кожен повертає `false`, коли сам уже відповів 403. Опцією в
+  `toNodeHandler` їх не передано.
+- **Запуск:** `node mcp/leaddesk-server/src/http.mjs`, у другому терміналі — чотири `curl` із
+  walkthrough (Task E1), `body.json` — у `.gitignore`, не закомічено. Нижче — вивід цього запуску, довгі
+  поля скорочено `…`:
+
+```text
+--- 1 normal
+{"result":{"tools":[{"name":"leaddesk_find_leads",…},{"name":"leaddesk_set_lead_status",…}]…}
+HTTP 200
+--- 2 Host: evil.example
+{"jsonrpc":"2.0","error":{"code":-32000,"message":"Invalid Host: evil.example"},"id":null}
+HTTP 403
+--- 3 Origin: https://evil.example
+{"jsonrpc":"2.0","error":{"code":-32000,"message":"Invalid Origin: evil.example"},"id":null}
+HTTP 403
+--- 4 no MCP-Protocol-Version
+{"jsonrpc":"2.0","error":{"code":-32020,"message":"Bad Request: the request headers and body disagree: … the required MCP-Protocol-Version header is absent","data":{…}},"id":1}
+HTTP 400
+```
+
+- Після рефакторингу stdio-артефакти Task A згенеровано заново тими самими командами: exit
+  `0 / 0 / 5 / 0`; `git diff --stat docs/mcp` показав зміну лише в `set-status.json` (поле `at`).
+- **Не перевірено:** що передача гвардів опцією в `toNodeHandler` мовчки ігнорується — я цього не
+  відтворював, лише виклик у обробнику й відповіді вище.

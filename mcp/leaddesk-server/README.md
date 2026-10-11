@@ -12,6 +12,12 @@ node src/server.mjs                                      # фікстура за
 LEADDESK_FIXTURE=/шлях/до/leads.json node src/server.mjs # інша фікстура
 ```
 
+## HTTP-варіант (бонус E1)
+
+```bash
+node src/http.mjs        # http://127.0.0.1:3333/mcp, PORT змінює порт; чужі Host і Origin відхиляє 403
+```
+
 ## Перевірка Inspector'ом (з кореня репозиторію)
 
 ```bash
