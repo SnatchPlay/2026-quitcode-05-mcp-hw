@@ -1,0 +1,26 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Лід lead_0002: new → contacted. Запис в аудиті: 2026-10-11T11:32:26.583Z."
+    }
+  ],
+  "structuredContent": {
+    "lead": {
+      "id": "lead_0002",
+      "company": "Rynok Books",
+      "status": "contacted",
+      "source": "webinar",
+      "budget": 500,
+      "createdAt": "2026-09-13T00:52:02.043Z"
+    },
+    "audit": {
+      "action": "lead.status_changed",
+      "leadId": "lead_0002",
+      "at": "2026-10-11T11:32:26.583Z",
+      "from": "new",
+      "to": "contacted",
+      "reason": "перевірка в Inspector"
+    }
+  }
+}
