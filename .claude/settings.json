@@ -20,7 +20,7 @@
       "mcp__supabase__list_migrations",
       "mcp__vercel__list_deployments",
       "mcp__vercel__get_deployment",
-      "mcp__vercel__get_deployment_build_logs"
+      "mcp__vercel__list_deployment_events"
     ],
     "ask": [
       "mcp__leaddesk__leaddesk_set_lead_status"
