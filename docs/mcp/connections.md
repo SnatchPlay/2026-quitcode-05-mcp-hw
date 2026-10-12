@@ -26,7 +26,7 @@
   `source`, `status` (рівно п'ять статусів) і `budget`, RLS увімкнено.
 - Сид `supabase/seed/leads.sql`: 20 рядків, `lead_0001`–`lead_0020`, ті самі, що в `materials/leads.json`
   (локально звірено: збігається за всіма полями, сума бюджетів `won` — 9000, один `won` без бюджету).
-- Скільки інструментів Supabase видно в `/mcp` із цим URL: **не записано** — число не фіксувалося.
+- Скільки інструментів Supabase видно в `/mcp`: для профілю «client» (`read_only=true&features=database,docs`, прогін A у Task C) — **5** (`/mcp` показав «supabase ✔ 5 tools»). Для URL з `.mcp.json` (`features=database,development,docs`) число не вимірювали.
 - Якими викликами створено схему й дані: `drop table if exists`, `apply_migration`, `execute_sql` (сид),
   два `select`. У записі повторного прогону режим «manual mode on» і читається діалог `apply_migration`;
   решту діалогів не видно, і автор стверджує, що схвалював кожен виклик вручну (див. `verification.md`).
