@@ -107,6 +107,17 @@
   TypeScript пройшов, 8 статичних сторінок, `Build Completed in /vercel/output [44s]`, застереження про
   застарілі пакети й непідтверджений postinstall `unrs-resolver`, у журнал потрапив налагоджувальний
   рядок застосунку `db:listUsers: 1`. Стан Vercel CLI: `vercel` на цій машині не встановлено.
+- **Playwright (`@playwright/mcp@0.0.82 --isolated --no-webmcp`, сесії лише з `playwright`, «manual mode on»):**
+  - **До/після:** перелік інструментів з однаковим запитом у нових сесіях — 25 до deny, 21 після;
+    зникли `browser_run_code_unsafe`, `browser_file_upload`, `browser_drop`, `browser_evaluate`
+    (`comm` між `mcp-before.txt` і `mcp-after.txt`). Перший знімок «до» був нечитабельним (перемальований
+    екран вузького терміналу), тому його перероблено у ширшому вікні.
+  - **Форма:** див. `docs/mcp/evidence/playwright-form-check.md` — форма відправилась, `POST /` → 200,
+    консоль без помилок; лід у дашборді не перевіряли.
+  - **Сам агент без прохання:** виконав shell-команду `git status --short && git check-ignore -v
+    .playwright-mcp` (діалог схвалення був). Більше нічого, чого б не просили, у записі не видно.
+  - **Порт 3000** на момент перевірки був зайнятий іншим локальним застосунком; його зупинили перед
+    запуском LeadDesk, щоб Playwright потрапив на правильний.
 
 ## Task E (бонус) — E1, HTTP-сервер із захистом Host/Origin
 
