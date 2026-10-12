@@ -1,6 +1,6 @@
 # Перевірка (Task A, Task B, бонус E1)
 
-- **Інструмент і версія, модель:** Claude Code 2.1.289 · Claude Sonnet 5.5 (`claude-sonnet-5-5`)
+- **Інструмент і версія, модель:** Task A і E1 (код, Inspector, `curl`) — Claude Code 2.1.289 · Claude Sonnet 5.5 (`claude-sonnet-5-5`); сесії Task B (Supabase, Vercel, Playwright) і прогони A/B — Claude Code 2.1.296 · Opus 5.5 (версія й модель видно в заголовках записів сесій)
 - **ОС і термінал, Node:** macOS (Darwin 25.6.0) · zsh, команди Inspector — через `bash` · Node v24.16.0
 
 ## Task A — сервер в Inspector
@@ -61,8 +61,8 @@
 - **Інші перевірки:** `grep -rc 'console\.log' mcp/leaddesk-server/src` → `0`;
   `cmp materials/leads.json mcp/leaddesk-server/fixtures/leads.json` → без різниці.
 - **Що було найважче в описах:** сказати моделі й про «змінює дані», і про «потрібне підтвердження»,
-  не повторюючи тексту двічі. Опис — лише підказка моделі; обов'язкове схвалення має давати клієнт, і це ще треба налаштувати й перевірити
-  в Task B (на цей момент `.claude/settings.json` не змінено).
+  не повторюючи тексту двічі. Опис — лише підказка моделі; обов'язкове схвалення дає клієнт: правило `ask` для
+  `leaddesk_set_lead_status` додано в `.claude/settings.json` у Task B.
 
 ## Task B — що зробили агенти з серверами
 
@@ -86,6 +86,7 @@
     `select` у записі **не читаються**, тож їхній текст я не наводжу. Агент перед записами сам описав
     план у чаті, і автор відповів «так» (тричі); автор також стверджує, що вручну схвалював кожен
     виклик — це його слова, записом повністю не підтверджені.
+  - **Відхилено:** відхилених викликів у записі повторного прогону не видно (відмов не було); повторний прогін відтворив таблицю, інших змін агент не робив.
   - **Роль:** `is_superuser = off`, але `postgres` — не обмежена роль: при вимкненому `read_only`
     сервер може будь-що, що дозволено ролі `postgres`.
   - **Перший прогін** (міграція й сид з першого разу) відбувався з індикатором «auto mode on», його
@@ -98,13 +99,13 @@
   знайшов єдиний деплой (production, READY, гілка `main`, коміт `958d2ee`) і зчитав подієвий лог
   інструментом `list_deployment_events`: інструмента `get_deployment_build_logs`, який називає
   walkthrough, на цьому сервері немає, тому `allow` у `.claude/settings.json` виправлено на реальне ім'я.
-  Агент ще сам викликав `list_teams` і двічі `list_projects` (діалоги схвалення «Do you want to proceed?
+  Агент ще сам тричі викликав інструменти переліку акаунта й проєктів (діалоги схвалення «Do you want to proceed?
   1. Yes 2. No» у записі читаються для всіх трьох), прочитав один файл і виконав одну shell-команду —
   її текст у записі нечитабельний. Результати цих викликів у репозиторій не потрапили.
   **Лог у `docs/mcp/evidence/vercel-build-log.txt` — з дашборда Vercel (Build Logs), скопований без змін,
   не відповідь MCP:** агентський запис відповіді MCP був перетиповуванням (відповідь MCP не пишеться
   у файл напряму), а перший запис обірвався. Лог: Next.js 16.3.5, `Compiled successfully in 15.2s`,
-  TypeScript пройшов, 8 статичних сторінок, `Build Completed in /vercel/output [44s]`, застереження про
+  TypeScript пройшов, 8 сторінок згенеровано (у таблиці маршрутів статичними позначено 4), `Build Completed in /vercel/output [44s]`, застереження про
   застарілі пакети й непідтверджений postinstall `unrs-resolver`, у журнал потрапив налагоджувальний
   рядок застосунку `db:listUsers: 1`. Стан Vercel CLI: `vercel` на цій машині не встановлено.
 - **Playwright (`@playwright/mcp@0.0.82 --isolated --no-webmcp`, сесії лише з `playwright`, «manual mode on»):**
@@ -118,6 +119,19 @@
     .playwright-mcp` (діалог схвалення був). Більше нічого, чого б не просили, у записі не видно.
   - **Порт 3000** на момент перевірки був зайнятий іншим локальним застосунком; його зупинили перед
     запуском LeadDesk, щоб Playwright потрапив на правильний.
+
+## Перевірка deny на `WebFetch` і стан `supabase` CLI
+
+- **`WebFetch`:** у порожній теці (поза репозиторієм) лежить копія `.claude/settings.json`; команда:
+  `claude -p "Use the WebFetch tool to fetch https://example.com and tell me the page title. If the tool is unavailable or denied, say exactly which." --setting-sources project --strict-mcp-config --permission-mode default`.
+  Відповідь моделі: інструмент `WebFetch` «unavailable in this session … I never got to call it, it wasn't
+  denied; it just isn't there», і сама запропонувала дістати сторінку через `curl` або допоміжного агента. Тобто deny
+  прибирає інструмент зі списку, а не відмовляє на виклик, і `Bash` лишається обхідним каналом. Claude Code
+  також попередив, що `allow`-записи ігноруються, бо тека не «trusted» (на deny це не вплинуло).
+- **`supabase` CLI:** `supabase --version` → `2.116.0`; `supabase projects list` повернув JSON із
+  переліком проєктів акаунта, в який CLI залогінений на цій машині. Вміст у репозиторій не записано;
+  важливо тільки те, що CLI має чинний токен і доступний із `Bash`.
+- **`vercel` CLI:** `which vercel` — не знайдено.
 
 ## Task E (бонус) — E1, HTTP-сервер із захистом Host/Origin
 

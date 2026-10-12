@@ -1,10 +1,10 @@
 # Підключення MCP-серверів LeadDesk (Task B)
 
 - **Акаунти** (особисті, без клієнтських організацій і команд): Supabase — особистий акаунт автора з
-  одним порожнім проєктом для цієї домашки; Vercel — особистий безплатний акаунт, форк підключено через
+  одним проєктом лише для цієї домашки (в ньому тільки таблиця `leads` із 20 синтетичними рядками); Vercel — особистий безплатний акаунт, форк підключено через
   git-інтеграцію в дашборді · Figma — не використовували.
-- **Третій сервер:** Playwright — акаунт не потрібен, немає місячної квоти викликів (у Figma на Starter
-  їх 20 на все), Chrome вже встановлено, а результатом є перевірка справжньої форми на `localhost:3000`.
+- **Третій сервер:** Playwright — акаунт не потрібен, немає місячної квоти викликів (за walkthrough, у Figma на Starter
+  їх 20 на місяць на все; не перевіряв), Chrome вже встановлено, а результатом є перевірка справжньої форми на `localhost:3000`.
 - **Vercel CLI на цій машині:** не встановлено (`which vercel` нічого не знаходить), тож `use_vercel_cli`
   → `Bash` → `vercel env/rollback/promote/rm` виконати нічим. Це стан цієї машини, а не правило: якщо
   CLI з'явиться й залогіниться в акаунт з реальними проєктами, deny на `mcp__vercel__*` цього не закриє.
@@ -13,8 +13,8 @@
 
 | Сервер | Який доступ | Навіщо нам | Що станеться при компрометації | Чим саме звужено |
 |---|---|---|---|---|
-| `supabase` | Один проєкт (`project_ref`), групи `database`, `development`, `docs`; `execute_sql` виконується від ролі `postgres` (`is_superuser = off`, але не обмежена роль), із `read_only=true` писати не може | Міграція схеми й сид (одна сесія), потім читання для A/B (Task C) | Крадій токена читає всі таблиці проєкту, зокрема `leads` (синтетичні дані); без `read_only` — міняє й видаляє будь-що, що дозволено `postgres` | `project_ref` (інші проєкти акаунта недоступні), `features=database,development,docs` (без `account`, `functions`, `branching`), після сиду `read_only=true`; в `allow` лише `search_docs`, `list_tables`, `list_migrations`, `execute_sql` і `apply_migration` — ніколи |
-| `vercel` | Токен — це користувач Vercel цілком (OAuth-скоуп один), сервер звузити в URL не можна | Лог білду (`list_deployment_events`) | Крадій бачить усі проєкти й логи акаунта, може купувати й деплоїти під цим користувачем | Лише `claude`-сторона: 11 інструментів, що змінюють стан (`buy_*`, `deploy_to_vercel`, `get_access_to_vercel_url`, `import-claude-design-from-url`, чотири `toolbar`), у `deny`; в `allow` лише `list_deployments`, `get_deployment`, `list_deployment_events` |
+| `supabase` | Один проєкт (`project_ref`), групи `database`, `development`, `docs`; `execute_sql` виконується від ролі `postgres` (`is_superuser = off`, але не обмежена роль), із `read_only=true` писати не може | Міграція схеми й сид (одна сесія), потім читання для A/B (Task C) | Крадій токена читає всі таблиці проєкту, зокрема `leads` (синтетичні дані); без `read_only` — міняє й видаляє будь-що, що дозволено `postgres` | `project_ref` (інші проєкти акаунта недоступні), `features=database,development,docs` (без `account`, `functions`, `branching`), після сиду `read_only=true`; в `allow` лише `search_docs`, `list_tables`, `list_migrations`; `execute_sql` і `apply_migration` туди не потрапляють |
+| `vercel` | Токен — це користувач Vercel цілком (OAuth-скоуп один); URL у `.mcp.json` не звужено: проєктний варіант `https://mcp.vercel.com/<org>/<project>` вимагає імен організації й проєкту, а їх у репозиторій не пишемо | Лог білду (`list_deployment_events`) | Крадій бачить усі проєкти й логи акаунта, може купувати й деплоїти під цим користувачем | Лише `claude`-сторона: 11 інструментів, що змінюють стан (`buy_*`, `deploy_to_vercel`, `get_access_to_vercel_url`, `import-claude-design-from-url`, чотири `toolbar`), у `deny`; в `allow` лише `list_deployments`, `get_deployment`, `list_deployment_events` |
 | `playwright` | Браузер у профілі лише в пам'яті: сторінка, форма, консоль, мережа; бачить усе, що відкриє | Перевірка форми заявки на `localhost:3000` | Сторінка, яку відкрив браузер, може підсунути агенту текст-інструкції; вкрадений доступ до процесу — це виконання коду на машині автора, якщо `browser_run_code_unsafe` не закритий | `--isolated`, `--no-webmcp`, версія `0.0.82` без `@latest`, `--allowed-origins http://localhost:3000` (це зручність, не межа безпеки); у `deny` — `browser_run_code_unsafe`, `webmcp_*`, `browser_file_upload`, `browser_drop`, `browser_evaluate` |
 
 `leaddesk` (Task A) у `.mcp.json` не входить: його додаємо командою `claude mcp add` зі скоупом `local`
